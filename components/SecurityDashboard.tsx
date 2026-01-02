@@ -1048,6 +1048,275 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
     );
 };
 
+// Web Hunter Component (Blue Theme)
+const WebHunterView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
+    const [target, setTarget] = useState('');
+    const [results, setResults] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [scanned, setScanned] = useState(false);
+    const [activeTab, setActiveTab] = useState('dirbuster');
+
+    const tools = [
+        { id: 'dirbuster', name: 'DirBuster' },
+        { id: 'gobuster', name: 'Gobuster' },
+        { id: 'nikto', name: 'Nikto' },
+        { id: 'wfuzz', name: 'Wfuzz' },
+        { id: 'feroxbuster', name: 'Feroxbuster' }
+    ];
+
+    const runScan = async () => {
+        if (!target) return;
+        setLoading(true);
+        setScanned(false);
+        setResults([]);
+        
+        try {
+            const res = await fetch(`${apiUrl}/api/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: 'web_hunter', args: [target, activeTab] })
+            });
+            const data = await res.json();
+            if (data.data && Array.isArray(data.data)) {
+                setResults(data.data);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+            setScanned(true);
+        }
+    };
+
+    return (
+        <div className="bg-[#f0f2f5] h-full flex flex-col font-sans">
+            <div className="bg-[#0b1e47] p-4 flex flex-col items-center justify-center space-y-4 shadow-md sticky top-0 z-20">
+                <div className="w-full max-w-5xl flex justify-start">
+                     <button onClick={() => setView('main')} className="text-white/70 hover:text-white flex items-center text-xs uppercase tracking-wider">
+                        <ArrowLeft className="w-4 h-4 mr-1" /> Dashboard
+                     </button>
+                </div>
+                <div className="flex w-full max-w-3xl bg-white rounded overflow-hidden h-12">
+                    <input 
+                        type="text" 
+                        value={target}
+                        onChange={(e) => setTarget(e.target.value)}
+                        placeholder="https://www.example.com"
+                        className="flex-1 px-4 text-gray-700 outline-none placeholder-gray-300"
+                        onKeyDown={(e) => e.key === 'Enter' && runScan()}
+                    />
+                    <button 
+                        onClick={runScan}
+                        disabled={loading}
+                        className="bg-[#0047ff] hover:bg-[#0037c4] text-white px-8 font-bold uppercase tracking-wide disabled:opacity-50 transition-colors"
+                    >
+                        {loading ? 'RUNNING...' : `RUN ${activeTab.toUpperCase()}`}
+                    </button>
+                </div>
+            </div>
+            
+            <div className="bg-[#11234e] text-gray-400 text-xs font-bold border-b border-gray-800">
+                <div className="max-w-5xl mx-auto flex overflow-x-auto">
+                    {tools.map((tool) => (
+                        <div 
+                            key={tool.id} 
+                            onClick={() => !loading && setActiveTab(tool.id)}
+                            className={`px-4 py-3 cursor-pointer transition-colors whitespace-nowrap ${
+                                activeTab === tool.id 
+                                ? 'bg-[#1a3060] text-yellow-500 border-b-2 border-yellow-500' 
+                                : 'hover:bg-[#1a3060] hover:text-white'
+                            }`}
+                        >
+                            {tool.name}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto w-full">
+                <div className="max-w-6xl mx-auto bg-white min-h-screen shadow-lg">
+                    <div className="flex items-center px-6 py-4 border-b border-gray-100 text-xs font-bold text-gray-900 uppercase tracking-wider sticky top-0 bg-white z-10">
+                        <div className="w-1/2">Result</div>
+                        <div className="w-1/4 text-center">Status</div>
+                        <div className="w-1/4 text-right">Details</div>
+                    </div>
+                    
+                    {loading && (
+                        <div className="p-10 flex flex-col items-center justify-center text-gray-400">
+                            <span className="animate-spin text-2xl mb-2">🕷️</span>
+                            <p className="text-sm font-semibold">Running {activeTab} scans...</p>
+                        </div>
+                    )}
+                    
+                    {!loading && scanned && results.length === 0 && (
+                        <div className="p-10 text-center text-gray-400 text-sm">
+                            No vulnerabilities or components found.
+                        </div>
+                    )}
+
+                    <div className="divide-y divide-gray-50 font-mono text-sm">
+                        {results.map((res, i) => (
+                            <div key={i} className="flex items-center px-6 py-3 hover:bg-gray-50 transition-colors group">
+                                <div className="w-1/2 font-semibold text-gray-700 truncate" title={res.url}>
+                                    <span className={res.type.includes('VULN') || res.type.includes('RISK') ? 'text-red-600' : ''}>
+                                        {res.path}
+                                    </span>
+                                    <span className="text-gray-400 font-normal text-xs ml-2 block truncate">{res.url}</span>
+                                </div>
+                                <div className="w-1/4 text-center">
+                                    <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                        res.status === 200 ? 'bg-green-100 text-green-700' : 
+                                        res.status === 403 ? 'bg-red-100 text-red-700' : 
+                                        res.status === 401 ? 'bg-orange-100 text-orange-700' : 
+                                        'bg-blue-100 text-blue-700'
+                                    }`}>
+                                        {res.status}
+                                    </span>
+                                </div>
+                                <div className="w-1/4 text-right text-gray-500 font-bold text-xs truncate">{res.type}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ThreatMapView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
+    const [connections, setConnections] = useState<any[]>([]);
+    const [logs, setLogs] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchMapData = async () => {
+        try {
+            const res = await fetch(`${apiUrl}/api/execute`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ command: 'map_data', args: [] })
+            });
+            const data = await res.json();
+            if (data.data && Array.isArray(data.data)) {
+                // Add jitter
+                const processed = data.data.map((d: any) => ({
+                    ...d,
+                    lat: d.lat + (Math.random() - 0.5) * 2,
+                    lon: d.lon + (Math.random() - 0.5) * 2,
+                    timestamp: new Date().toLocaleTimeString()
+                }));
+                setConnections(processed);
+                
+                // Add to persistent logs (prepend new ones)
+                setLogs(prev => {
+                    const newLogs = [...processed, ...prev];
+                    return newLogs.slice(0, 50); // Keep last 50
+                });
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchMapData();
+        const interval = setInterval(fetchMapData, 20000); 
+        return () => clearInterval(interval);
+    }, []);
+
+    const getX = (lon: number) => ((lon + 180) / 360) * 100;
+    const getY = (lat: number) => ((90 - lat) / 180) * 100;
+
+    return (
+        <div className="bg-[#0b1120] h-full flex flex-col relative overflow-hidden">
+             {/* Header */}
+            <div className="flex items-center justify-between p-4 z-20 border-b border-cyan-900/50 bg-[#0b1120]/90 backdrop-blur shadow-lg shadow-cyan-900/10">
+                <button onClick={() => setView('main')} className="p-2 hover:bg-cyan-900/30 rounded-full transition-colors flex items-center text-cyan-500">
+                    <ArrowLeft className="w-5 h-5 mr-2" /> <span className="text-xs font-bold tracking-widest">BACK TO HQ</span>
+                </button>
+                <div className="text-center">
+                    <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center justify-center gap-3 text-shadow-glow">
+                        <Globe className="w-6 h-6 text-red-500 animate-pulse" />
+                        THREAT INTEL <span className="text-red-600">LIVE</span>
+                    </h2>
+                </div>
+                 <div className="flex flex-col items-end">
+                    <span className="text-[10px] text-cyan-500 font-mono uppercase tracking-widest">Active Targets</span>
+                    <span className="text-2xl font-mono text-red-500 leading-none">{connections.length}</span>
+                 </div>
+            </div>
+
+            {/* Map Area */}
+            <div className="flex-1 relative w-full h-full bg-[#050914] flex items-center justify-center p-0 overflow-hidden perspective-1000">
+                 <div className="relative w-full h-full"> 
+                     <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
+                      <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
+                          <span className="text-9xl font-black text-slate-800 tracking-[1em] select-none">WORLD MAP</span>
+                      </div>
+                     <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
+                        {connections.map((conn, i) => {
+                            const x = getX(conn.lon);
+                            const y = getY(conn.lat);
+                            return (
+                                <g key={i}>
+                                    <defs>
+                                        <linearGradient id={`grad${i}`} x1={`${x}%`} y1={`${y}%`} x2="50%" y2="100%">
+                                            <stop offset="0%" stopColor="#f87171" />
+                                            <stop offset="100%" stopColor="#0891b2" stopOpacity="0" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path 
+                                        d={`M ${x * window.innerWidth / 100} ${y * window.innerHeight / 100} Q ${50 * window.innerWidth / 100} ${50 * window.innerHeight / 100} ${50 * window.innerWidth / 100} ${window.innerHeight}`}
+                                        fill="none"
+                                        stroke={`url(#grad${i})`}
+                                        strokeWidth="1"
+                                        className="animate-dash"
+                                    />
+                                </g>
+                            );
+                        })}
+                     </svg>
+                     {connections.map((conn, i) => (
+                         <div 
+                            key={i}
+                            className="absolute w-4 h-4 group z-20 cursor-crosshair"
+                            style={{ left: `${getX(conn.lon)}%`, top: `${getY(conn.lat)}%`, transform: 'translate(-50%, -50%)' }}
+                         >
+                             <div className="relative w-full h-full flex items-center justify-center">
+                                 <span className="absolute w-full h-full bg-red-500 rounded-full opacity-50 animate-ping"></span>
+                                 <span className="relative w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_#ef4444]"></span>
+                             </div>
+                         </div>
+                     ))}
+                 </div>
+            </div>
+            {/* Intel Grid Footer */}
+            <div className="h-40 bg-[#080c17] border-t border-cyan-900/50 flex text-[10px] font-mono">
+                <div className="w-1/3 border-r border-cyan-900/30 p-2 overflow-hidden">
+                    <h3 className="text-cyan-600 font-bold mb-2">SYSTEM STATUS</h3>
+                    <div className="space-y-1 text-slate-400">
+                        <p>GEO-LOCK: <span className="text-green-400">ACTIVE</span></p>
+                        <p>NETSCAN: <span className="text-green-400">RUNNING</span></p>
+                    </div>
+                </div>
+                <div className="flex-1 p-2 overflow-y-auto">
+                    <h3 className="text-red-500 font-bold mb-2 flex items-center gap-2">
+                        <Activity className="w-3 h-3" /> LIVE LOG
+                    </h3>
+                     {logs.map((c, i) => (
+                        <div key={i} className="flex gap-4 border-b border-cyan-900/10 py-0.5 hover:bg-white/5 transition-colors">
+                            <span className="text-cyan-700 w-16">{c.timestamp || new Date().toLocaleTimeString()}</span>
+                            <span className="text-white w-24 truncate">{c.ip}</span>
+                            <span className="text-yellow-500 w-32 truncate">{c.city || 'Unknown'}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Main Security Dashboard Component
 const SecurityDashboard: React.FC<{apiUrl: string}> = ({apiUrl}) => {
   const [view, setView] = useState<'main' | 'port' | 'os' | 'vuln' | 'stress' | 'wifi' | 'domain' | 'flipper' | 'map' | 'recon' | 'speedtest' | 'subdomain' | 'web_hunter' | 'bettercap' | 'honeypot' | 'output'>('main');
