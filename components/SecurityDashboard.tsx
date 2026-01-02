@@ -935,7 +935,7 @@ const ThreatMapView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUr
 
 
 // Subdomain Finder Component (Screenshot Match)
-const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
+const SubdomainFinderView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
     const [target, setTarget] = useState('');
     const [results, setResults] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -948,7 +948,7 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
         setResults([]);
         
         try {
-            const res = await fetch('http://127.0.0.1:49152/api/execute', {
+            const res = await fetch(`${apiUrl}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'subfinder', args: [target] })
@@ -1183,139 +1183,6 @@ const WebHunterView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUr
     );
 };
 
-const ThreatMapView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
-    const [connections, setConnections] = useState<any[]>([]);
-    const [logs, setLogs] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const fetchMapData = async () => {
-        try {
-            const res = await fetch(`${apiUrl}/api/execute`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ command: 'map_data', args: [] })
-            });
-            const data = await res.json();
-            if (data.data && Array.isArray(data.data)) {
-                // Add jitter
-                const processed = data.data.map((d: any) => ({
-                    ...d,
-                    lat: d.lat + (Math.random() - 0.5) * 2,
-                    lon: d.lon + (Math.random() - 0.5) * 2,
-                    timestamp: new Date().toLocaleTimeString()
-                }));
-                setConnections(processed);
-                
-                // Add to persistent logs (prepend new ones)
-                setLogs(prev => {
-                    const newLogs = [...processed, ...prev];
-                    return newLogs.slice(0, 50); // Keep last 50
-                });
-            }
-        } catch (e) {
-            console.error(e);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchMapData();
-        const interval = setInterval(fetchMapData, 20000); 
-        return () => clearInterval(interval);
-    }, []);
-
-    const getX = (lon: number) => ((lon + 180) / 360) * 100;
-    const getY = (lat: number) => ((90 - lat) / 180) * 100;
-
-    return (
-        <div className="bg-[#0b1120] h-full flex flex-col relative overflow-hidden">
-             {/* Header */}
-            <div className="flex items-center justify-between p-4 z-20 border-b border-cyan-900/50 bg-[#0b1120]/90 backdrop-blur shadow-lg shadow-cyan-900/10">
-                <button onClick={() => setView('main')} className="p-2 hover:bg-cyan-900/30 rounded-full transition-colors flex items-center text-cyan-500">
-                    <ArrowLeft className="w-5 h-5 mr-2" /> <span className="text-xs font-bold tracking-widest">BACK TO HQ</span>
-                </button>
-                <div className="text-center">
-                    <h2 className="text-2xl font-black tracking-[0.2em] text-white flex items-center justify-center gap-3 text-shadow-glow">
-                        <Globe className="w-6 h-6 text-red-500 animate-pulse" />
-                        THREAT INTEL <span className="text-red-600">LIVE</span>
-                    </h2>
-                </div>
-                 <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-cyan-500 font-mono uppercase tracking-widest">Active Targets</span>
-                    <span className="text-2xl font-mono text-red-500 leading-none">{connections.length}</span>
-                 </div>
-            </div>
-
-            {/* Map Area */}
-            <div className="flex-1 relative w-full h-full bg-[#050914] flex items-center justify-center p-0 overflow-hidden perspective-1000">
-                 <div className="relative w-full h-full"> 
-                     <div className="absolute inset-0 bg-[linear-gradient(rgba(0,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none">
-                          <span className="text-9xl font-black text-slate-800 tracking-[1em] select-none">WORLD MAP</span>
-                      </div>
-                     <svg className="absolute inset-0 w-full h-full pointer-events-none z-10">
-                        {connections.map((conn, i) => {
-                            const x = getX(conn.lon);
-                            const y = getY(conn.lat);
-                            return (
-                                <g key={i}>
-                                    <defs>
-                                        <linearGradient id={`grad${i}`} x1={`${x}%`} y1={`${y}%`} x2="50%" y2="100%">
-                                            <stop offset="0%" stopColor="#f87171" />
-                                            <stop offset="100%" stopColor="#0891b2" stopOpacity="0" />
-                                        </linearGradient>
-                                    </defs>
-                                    <path 
-                                        d={`M ${x * window.innerWidth / 100} ${y * window.innerHeight / 100} Q ${50 * window.innerWidth / 100} ${50 * window.innerHeight / 100} ${50 * window.innerWidth / 100} ${window.innerHeight}`}
-                                        fill="none"
-                                        stroke={`url(#grad${i})`}
-                                        strokeWidth="1"
-                                        className="animate-dash"
-                                    />
-                                </g>
-                            );
-                        })}
-                     </svg>
-                     {connections.map((conn, i) => (
-                         <div 
-                            key={i}
-                            className="absolute w-4 h-4 group z-20 cursor-crosshair"
-                            style={{ left: `${getX(conn.lon)}%`, top: `${getY(conn.lat)}%`, transform: 'translate(-50%, -50%)' }}
-                         >
-                             <div className="relative w-full h-full flex items-center justify-center">
-                                 <span className="absolute w-full h-full bg-red-500 rounded-full opacity-50 animate-ping"></span>
-                                 <span className="relative w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_#ef4444]"></span>
-                             </div>
-                         </div>
-                     ))}
-                 </div>
-            </div>
-            {/* Intel Grid Footer */}
-            <div className="h-40 bg-[#080c17] border-t border-cyan-900/50 flex text-[10px] font-mono">
-                <div className="w-1/3 border-r border-cyan-900/30 p-2 overflow-hidden">
-                    <h3 className="text-cyan-600 font-bold mb-2">SYSTEM STATUS</h3>
-                    <div className="space-y-1 text-slate-400">
-                        <p>GEO-LOCK: <span className="text-green-400">ACTIVE</span></p>
-                        <p>NETSCAN: <span className="text-green-400">RUNNING</span></p>
-                    </div>
-                </div>
-                <div className="flex-1 p-2 overflow-y-auto">
-                    <h3 className="text-red-500 font-bold mb-2 flex items-center gap-2">
-                        <Activity className="w-3 h-3" /> LIVE LOG
-                    </h3>
-                     {logs.map((c, i) => (
-                        <div key={i} className="flex gap-4 border-b border-cyan-900/10 py-0.5 hover:bg-white/5 transition-colors">
-                            <span className="text-cyan-700 w-16">{c.timestamp || new Date().toLocaleTimeString()}</span>
-                            <span className="text-white w-24 truncate">{c.ip}</span>
-                            <span className="text-yellow-500 w-32 truncate">{c.city || 'Unknown'}</span>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-};
 
 // Main Security Dashboard Component
 const SecurityDashboard: React.FC<{apiUrl: string}> = ({apiUrl}) => {
@@ -1917,9 +1784,9 @@ const HoneyPortView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUr
 };
 
 // Speedtest Component
-const SpeedtestView: React.FC<{setView: any}> = ({setView}) => {
+const SpeedtestView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
     const [status, setStatus] = useState<'idle' | 'testing' | 'done' | 'error'>('idle');
-    const [results, setResults] = useState<any>(null);
+    const [results, setResults] = useState<any>({ download: 0, upload: 0, ping: 0 });
     const [gaugeValue, setGaugeValue] = useState(0);
 
     const startTest = async () => {
@@ -1932,7 +1799,7 @@ const SpeedtestView: React.FC<{setView: any}> = ({setView}) => {
         }, 200);
 
         try {
-            const res = await fetch('http://127.0.0.1:49152/api/execute', {
+            const res = await fetch(`${apiUrl}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'speedtest', args: [] })
