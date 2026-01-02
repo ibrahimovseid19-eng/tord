@@ -1,0 +1,7 @@
+{
+  "name": "NetGuardian Pro (Fing-Inspired)",
+  "description": "A comprehensive network analysis and cybersecurity tool with graphical and terminal interfaces for device discovery, pinging, and security auditing.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
