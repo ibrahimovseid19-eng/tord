@@ -2218,3 +2218,5 @@ const SpeedtestView: React.FC<{setView: any}> = ({setView}) => {
 };
 
 
+
+export default SecurityDashboard;
