@@ -1175,13 +1175,7 @@ const WebHunterView: React.FC<{setView: any}> = ({setView}) => {
     );
 };
 
-const SecurityDashboard: React.FC = () => {
-  const [view, setView] = useState<'main' | 'recon' | 'output' | 'bettercap' | 'honeypot' | 'speedtest' | 'map' | 'subdomain' | 'web_hunter' | 'port_scanner' | 'domain_intel' | 'flipper' | 'wifi_spectrum' | 'os_fingerprint'>('main');
 
-  // ... (keep state) ...
-
-  // State for views and tools
-const ThreatMapView: React.FC<{setView: any}> = ({setView}) => {
     const [connections, setConnections] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -2223,14 +2217,4 @@ const SpeedtestView: React.FC<{setView: any}> = ({setView}) => {
     );
 };
 
-export default SecurityDashboard;
-
-// Add imported icons (assuming generic Lucide imports at top)
-// Need ArrowDown, ArrowUp from lucide-react if not present.
-// Actually, let's just use existing or check if imported. 
-// Assuming top imports include basic icons. If not, fallback will error.
-// I'll add them to import list in a separate step if needed. 
-// For now, assume common imports are available or can rely on what we have.
-// Available: Shield, Lock, Wifi, Search, AlertTriangle, Zap, Terminal, Radio, ArrowLeft, Signal, etc.
-// Need ArrowDown, ArrowUp. I will do a quick check or just add them.
 
