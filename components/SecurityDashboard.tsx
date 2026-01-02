@@ -1492,6 +1492,10 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
     );
 };
 
+// Main Security Dashboard Component
+const SecurityDashboard: React.FC<{apiUrl: string}> = ({apiUrl}) => {
+  const [view, setView] = useState<'main' | 'port' | 'os' | 'vuln' | 'stress' | 'wifi' | 'domain' | 'flipper' | 'map' | 'recon' | 'speedtest' | 'subdomain' | 'web_hunter' | 'bettercap' | 'honeypot' | 'output'>('main');
+
   // State for views and tools
   const [activeToolName, setActiveToolName] = useState('');
   const [bettercapData, setBettercapData] = useState<any>({ running: false, events: [], stats: {}, devices: 0 });
