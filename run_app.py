@@ -26,7 +26,7 @@ def run_server():
     print("Starting backend engine...")
     # Hide banner to keep it clean
     sys.argv = [sys.argv[0]] # clean args for uvicorn
-    uvicorn.run("backend.api:app", host="127.0.0.1", port=49152, log_level="error")
+    uvicorn.run("backend.api:app", host="0.0.0.0", port=49152, log_level="error")
 
 def main():
     # 1. Install deps logic

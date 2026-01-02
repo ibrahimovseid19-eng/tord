@@ -50,7 +50,7 @@ interface WifiNetwork {
           setResults([]);
           
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'ports', args: [target] })
@@ -153,7 +153,7 @@ interface WifiNetwork {
       const runScan = async () => {
           setLoading(true);
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'detect_os', args: [target] })
@@ -249,7 +249,7 @@ interface WifiNetwork {
       const scan = async () => {
           setLoading(true);
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'wifi_scan' })
@@ -418,7 +418,7 @@ interface WifiNetwork {
           setData(null);
           
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'domain_intel', args: [target] })
@@ -555,7 +555,7 @@ interface WifiNetwork {
       const generatePayload = async (type: string) => {
           if (!payloadText) return;
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'generate_payload', args: [payloadText, type] })
@@ -567,7 +567,7 @@ interface WifiNetwork {
       
       const sendRadio = async (cmd: string) => {
           try {
-              const res = await fetch('http://127.0.0.1:49152/api/execute', {
+              const res = await fetch('http://192.168.1.75:49152/api/execute', {
                    method: 'POST',
                    headers: { 'Content-Type': 'application/json' },
                    body: JSON.stringify({ command: 'bettercap_exec', args: [cmd] })
@@ -728,7 +728,7 @@ interface WifiNetwork {
                                           </p>
                                           <button 
                                               onClick={async () => {
-                                                  const res = await fetch('http://127.0.0.1:49152/api/execute', {
+                                                  const res = await fetch('http://192.168.1.75:49152/api/execute', {
                                                       method: 'POST',
                                                       headers: {'Content-Type': 'application/json'},
                                                       body: JSON.stringify({command: 'generate_flipper', args: [tool]})
@@ -767,7 +767,7 @@ const ThreatMapView: React.FC<{setView: any}> = ({setView}) => {
 
     const fetchMapData = async () => {
         try {
-            const res = await fetch('http://127.0.0.1:49152/api/execute', {
+            const res = await fetch('http://192.168.1.75:49152/api/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'map_data', args: [] })
