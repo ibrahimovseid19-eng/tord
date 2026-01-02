@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Add Android Platform
         run: npx cap add android
@@ -38,15 +38,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Fix Gradlew Permissions
-        working-directory: android
+      - name: Accept Android Licenses
         run: |
-          chmod +x gradlew
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Build APK with Gradle
         working-directory: android
         run: |
-          bash ./gradlew assembleDebug --stacktrace
+          chmod +x gradlew
+          bash ./gradlew assembleDebug -x lint --stacktrace --warning-mode all
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
