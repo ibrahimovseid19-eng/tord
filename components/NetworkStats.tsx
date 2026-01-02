@@ -23,7 +23,7 @@ interface NetworkInfo {
   ssid: string;
 }
 
-const NetworkStats: React.FC = () => {
+const NetworkStats: React.FC<{apiUrl: string}> = ({apiUrl}) => {
   const [data, setData] = useState<DataPoint[]>([]);
   const [latestSpeeds, setLatestSpeeds] = useState({ down: 0, up: 0 });
   const [info, setInfo] = useState<NetworkInfo>({ ip: '...', gateway: '...', ssid: '...' });
@@ -42,7 +42,7 @@ const NetworkStats: React.FC = () => {
 
     const fetchData = async () => {
       try {
-        const res = await fetch('http://192.168.1.75:49152/api/network');
+        const res = await fetch(`${apiUrl}/api/network`);
         if (!res.ok) return;
         const json = await res.json();
         

@@ -5,9 +5,10 @@ import { INITIAL_DEVICES } from '../constants';
 
 interface TerminalComponentProps {
   initialLines?: TerminalLine[];
+  apiUrl: string;
 }
 
-const TerminalComponent: React.FC<TerminalComponentProps> = ({ initialLines = [] }) => {
+const TerminalComponent: React.FC<TerminalComponentProps> = ({ initialLines = [], apiUrl }) => {
   const [history, setHistory] = useState<TerminalLine[]>(initialLines);
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -60,7 +61,7 @@ const TerminalComponent: React.FC<TerminalComponentProps> = ({ initialLines = []
     try {
       setHistory(prev => [...prev, { text: 'Executing...', type: 'info' }]);
       
-      const res = await fetch('http://192.168.1.75:49152/api/execute', {
+      const res = await fetch(`${apiUrl}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command, args })

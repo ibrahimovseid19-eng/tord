@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield, Clock, HardDrive, Network, Tag, Info, Cpu, Smartphone, Monitor, Laptop, Printer, Router } from 'lucide-react';
 import { INITIAL_DEVICES, DEVICE_ICONS } from '../constants';
 
-const DeviceDetail: React.FC = () => {
+const DeviceDetail: React.FC<{apiUrl: string}> = ({apiUrl}) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [device, setDevice] = React.useState<any>(null);
@@ -34,7 +34,7 @@ const DeviceDetail: React.FC = () => {
     if (!device) return;
     setScanResult("Scanning...");
     try {
-      const res = await fetch('http://192.168.1.75:49152/api/execute', {
+      const res = await fetch(`${apiUrl}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: 'ports', args: [device.ip] })

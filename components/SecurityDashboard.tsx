@@ -37,7 +37,7 @@ interface WifiNetwork {
 
 
   // Port Scanner Component (Purple Theme)
-  const PortScannerView: React.FC<{setView: any}> = ({setView}) => {
+  const PortScannerView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
       const [target, setTarget] = useState('');
       const [results, setResults] = useState<any[]>([]);
       const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ interface WifiNetwork {
           setResults([]);
           
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'ports', args: [target] })
@@ -145,7 +145,7 @@ interface WifiNetwork {
           </div>
       );
   };
-  const OSFingerprintView: React.FC<{setView: any}> = ({setView}) => {
+  const OSFingerprintView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
       const [target, setTarget] = useState('8.8.8.8');
       const [result, setResult] = useState<any>(null);
       const [loading, setLoading] = useState(false);
@@ -153,7 +153,7 @@ interface WifiNetwork {
       const runScan = async () => {
           setLoading(true);
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'detect_os', args: [target] })
@@ -242,14 +242,14 @@ interface WifiNetwork {
   };
   
   // New WiFi Analyzer Component
-  const WiFiSpectrumView: React.FC<{setView: any}> = ({setView}) => {
+  const WiFiSpectrumView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
       const [networks, setNetworks] = useState<any[]>([]);
       const [loading, setLoading] = useState(true);
       
       const scan = async () => {
           setLoading(true);
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'wifi_scan' })
@@ -407,7 +407,7 @@ interface WifiNetwork {
 
 
   // Domain Intel Component (Orange/Dark Theme)
-  const DomainIntelView: React.FC<{setView: any}> = ({setView}) => {
+  const DomainIntelView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
       const [target, setTarget] = useState('');
       const [data, setData] = useState<any>(null);
       const [loading, setLoading] = useState(false);
@@ -418,7 +418,7 @@ interface WifiNetwork {
           setData(null);
           
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'domain_intel', args: [target] })
@@ -539,7 +539,7 @@ interface WifiNetwork {
   };
   
   // Flipper Zero Style Component
-  const FlipperView: React.FC<{setView: any}> = ({setView}) => {
+  const FlipperView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
       const [tool, setTool] = useState<'badusb' | 'radio' | 'crypto' | 'nfc' | 'ir'>('badusb');
       const [payloadText, setPayloadText] = useState('');
       
@@ -555,7 +555,7 @@ interface WifiNetwork {
       const generatePayload = async (type: string) => {
           if (!payloadText) return;
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({ command: 'generate_payload', args: [payloadText, type] })
@@ -567,7 +567,7 @@ interface WifiNetwork {
       
       const sendRadio = async (cmd: string) => {
           try {
-              const res = await fetch('http://192.168.1.75:49152/api/execute', {
+              const res = await fetch(`${apiUrl}/api/execute`, {
                    method: 'POST',
                    headers: { 'Content-Type': 'application/json' },
                    body: JSON.stringify({ command: 'bettercap_exec', args: [cmd] })
@@ -728,7 +728,7 @@ interface WifiNetwork {
                                           </p>
                                           <button 
                                               onClick={async () => {
-                                                  const res = await fetch('http://192.168.1.75:49152/api/execute', {
+                                                  const res = await fetch(`${apiUrl}/api/execute`, {
                                                       method: 'POST',
                                                       headers: {'Content-Type': 'application/json'},
                                                       body: JSON.stringify({command: 'generate_flipper', args: [tool]})
@@ -760,14 +760,14 @@ interface WifiNetwork {
   };
   
   // Threat Map Component
-const ThreatMapView: React.FC<{setView: any}> = ({setView}) => {
+const ThreatMapView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
     const [connections, setConnections] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchMapData = async () => {
         try {
-            const res = await fetch('http://192.168.1.75:49152/api/execute', {
+            const res = await fetch(`${apiUrl}/api/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command: 'map_data', args: [] })
@@ -1504,7 +1504,7 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
     setIsLimitScanning(true);
     setNetworks([]);
     try {
-      const res = await fetch('http://127.0.0.1:49152/api/execute', {
+      const res = await fetch(`${apiUrl}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: 'recon', args: [] })
@@ -1580,7 +1580,7 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
     setToolOutput(`> Executing ${command} on ${target || 'localhost'}...\n> Please wait, this involves active probing...\n`);
     
     try {
-      const res = await fetch('http://127.0.0.1:49152/api/execute', {
+      const res = await fetch(`${apiUrl}/api/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command, args: [target] })
@@ -1599,7 +1599,7 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
     if (view === 'bettercap') {
         const fetchData = async () => {
             try {
-                const res = await fetch('http://127.0.0.1:49152/api/bettercap/data');
+                const res = await fetch(`${apiUrl}/api/bettercap/data`);
                 const data = await res.json();
                 setBettercapData(data);
             } catch (e) {
@@ -1615,9 +1615,9 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
   const toggleBettercap = async () => {
       try {
         const endpoint = bettercapData.running ? 'stop' : 'start';
-        await fetch(`http://127.0.0.1:49152/api/bettercap/${endpoint}`, { method: 'POST' });
+        await fetch(`${apiUrl}/api/bettercap/${endpoint}`, { method: 'POST' });
         // Immediate update
-        const res = await fetch('http://127.0.0.1:49152/api/bettercap/data');
+        const res = await fetch(`${apiUrl}/api/bettercap/data`);
         setBettercapData(await res.json());
       } catch (e) {
         console.error(e);
@@ -1646,43 +1646,43 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
   };
 
   if (view === 'honeypot') {
-    return <HoneyPortView setView={setView} />;
+    return <HoneyPortView setView={setView} apiUrl={apiUrl} />;
   }
 
   if (view === 'speedtest') {
-      return <SpeedtestView setView={setView} />;
+      return <SpeedtestView setView={setView} apiUrl={apiUrl} />;
   }
 
   if (view === 'map') {
-      return <ThreatMapView setView={setView} />;
+      return <ThreatMapView setView={setView} apiUrl={apiUrl} />;
   }
 
   if (view === 'subdomain') {
-      return <SubdomainFinderView setView={setView} />;
+      return <SubdomainFinderView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'web_hunter') {
-      return <WebHunterView setView={setView} />;
+      return <WebHunterView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'port_scanner') {
-      return <PortScannerView setView={setView} />;
+      return <PortScannerView setView={setView} apiUrl={apiUrl} />;
   }
 
   if (view === 'domain_intel') {
-      return <DomainIntelView setView={setView} />;
+      return <DomainIntelView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'flipper') {
-      return <FlipperView setView={setView} />;
+      return <FlipperView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'wifi_spectrum') {
-      return <WiFiSpectrumView setView={setView} />;
+      return <WiFiSpectrumView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'os_fingerprint') {
-      return <OSFingerprintView setView={setView} />;
+      return <OSFingerprintView setView={setView} apiUrl={apiUrl} />;
   }
   
   if (view === 'output') {
@@ -1893,7 +1893,7 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
 
   // HoneyPort View
   if (view === 'honeypot') {
-    return <HoneyPortView setView={setView} />;
+    return <HoneyPortView setView={setView} apiUrl={apiUrl} />;
   }
 
   // MAIN VIEW
@@ -1933,17 +1933,17 @@ const SubdomainFinderView: React.FC<{setView: any}> = ({setView}) => {
       </div>
 
       <div className="mt-8 bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-        <HealthWidget />
+        <HealthWidget apiUrl={apiUrl} />
       </div>
     </div>
   );
 };
 
-const HealthWidget = () => {
+const HealthWidget: React.FC<{apiUrl: string}> = ({apiUrl}) => {
     const [health, setHealth] = useState({ score: 95, status: 'Checking...', rogue_devices: 0, risks: [] });
     
     useEffect(() => {
-        fetch('http://127.0.0.1:49152/api/health')
+        fetch(`${apiUrl}/api/health`)
            .then(res => res.json())
            .then(data => setHealth(data))
            .catch(() => {});
@@ -2008,13 +2008,13 @@ const HealthWidget = () => {
 
 
 // HoneyPort Component
-const HoneyPortView: React.FC<{setView: any}> = ({setView}) => {
+const HoneyPortView: React.FC<{setView: any, apiUrl: string}> = ({setView, apiUrl}) => {
     const [stats, setStats] = useState<any>({ running: false, port: 9999, count: 0, intrusions: [] });
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const res = await fetch('http://127.0.0.1:49152/api/honeypot/stats');
+                const res = await fetch(`${apiUrl}/api/honeypot/stats`);
                 const data = await res.json();
                 setStats(data);
             } catch (e) {}
@@ -2026,7 +2026,7 @@ const HoneyPortView: React.FC<{setView: any}> = ({setView}) => {
 
     const toggle = async () => {
         const ep = stats.running ? 'stop' : 'start';
-        await fetch(`http://127.0.0.1:49152/api/honeypot/${ep}`, { method: 'POST' });
+        await fetch(`${apiUrl}/api/honeypot/${ep}`, { method: 'POST' });
         // optimized update handled by interval
     };
 
