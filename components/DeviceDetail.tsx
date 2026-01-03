@@ -14,10 +14,16 @@ const DeviceDetail: React.FC<{apiUrl: string}> = ({apiUrl}) => {
   React.useEffect(() => {
     const fetchDevice = async () => {
       try {
+        if (!apiUrl) {
+           // STANDALONE: Pull from local registry
+           const found = INITIAL_DEVICES.find((d: any) => d.id === id || d.mac === id);
+           setDevice(found);
+           setLoading(false);
+           return;
+        }
         const res = await fetch(`${apiUrl}/api/devices`);
         if (res.ok) {
           const devices = await res.json();
-          // Find device by mac (id)
           const found = devices.find((d: any) => d.id === id || d.mac === id);
           setDevice(found);
         }
@@ -28,11 +34,30 @@ const DeviceDetail: React.FC<{apiUrl: string}> = ({apiUrl}) => {
       }
     };
     fetchDevice();
-  }, [id]);
+  }, [id, apiUrl]);
 
   const handlePortScan = async () => {
     if (!device) return;
-    setScanResult("Scanning...");
+    setScanResult("Initializing Native Probe...");
+    
+    if (!apiUrl) {
+       // STANDALONE: Local Probe
+       const commonPorts = [80, 443, 8080, 22];
+       let results = `Local Scan Result for ${device.ip}:\n`;
+       
+       for(const p of commonPorts) {
+          try {
+             await fetch(`http://${device.ip}:${p}`, { mode: 'no-cors' });
+             results += `[+] Port ${p}/tcp: OPEN\n`;
+          } catch(e) {
+             results += `[-] Port ${p}/tcp: CLOSED\n`;
+          }
+          setScanResult(results + "...");
+       }
+       setScanResult(results + "\nScan Finished.");
+       return;
+    }
+
     try {
       const res = await fetch(`${apiUrl}/api/execute`, {
         method: 'POST',
