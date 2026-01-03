@@ -99,13 +99,14 @@ const TerminalComponent: React.FC<TerminalComponentProps> = ({ initialLines = []
         <div ref={bottomRef} />
       </div>
       
-      <form onSubmit={handleCommand} className="flex items-center border-t border-slate-800 pt-3">
-        <span className="text-white mr-2 shrink-0">root@netguardian:~$</span>
+      <form onSubmit={handleCommand} className="flex items-center border-t border-slate-800 pt-3 pb-2">
+        <span className="text-white mr-2 shrink-0 text-xs opacity-70">#</span>
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="bg-transparent border-none outline-none flex-1 text-sm text-white"
+          className="bg-transparent border-none outline-none flex-1 text-sm text-white placeholder-slate-700"
+          placeholder="Enter command..."
           autoFocus
           spellCheck={false}
           autoComplete="off"

@@ -28,68 +28,136 @@ const ApiContext = React.createContext<{
 }>({ apiUrl: 'http://192.168.1.75:49152', setApiUrl: () => {} });
 
 const ServerConfigScreen: React.FC<{ onConnect: () => void }> = ({ onConnect }) => {
-  const { apiUrl, setApiUrl } = React.useContext(ApiContext);
-  const [ip, setIp] = useState(apiUrl.replace('http://', '').replace(':49152', ''));
-  const [status, setStatus] = useState<'idle' | 'checking' | 'error'>('idle');
+  const { setApiUrl } = React.useContext(ApiContext);
+  const [status, setStatus] = useState('Initializing Secure Node Discovery...');
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
-  const checkConnection = async () => {
-    setStatus('checking');
-    const url = `http://${ip}:49152`;
+  const scanSubnet = async (prefix: string) => {
+    // Port 49152 is our standard backend port
+    const range = Array.from({ length: 254 }, (_, i) => i + 1);
+    
+    // Scan in concurrent batches for speed
+    const batchSize = 30;
+    for (let i = 0; i < range.length; i += batchSize) {
+      const batch = range.slice(i, i + batchSize);
+      const promises = batch.map(async (lastOctet) => {
+        const ip = `${prefix}.${lastOctet}`;
+        const url = `http://${ip}:49152`;
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 1200); // 1.2s per IP
+          
+          const res = await fetch(`${url}/api/network`, { signal: controller.signal });
+          if (res.ok) {
+            clearTimeout(timeoutId);
+            return url;
+          }
+        } catch (e) {}
+        return null;
+      });
+
+      const results = await Promise.all(promises);
+      const found = results.find(r => r !== null);
+      if (found) return found;
+      
+      setProgress(Math.round(((i + batchSize) / 254) * 100));
+    }
+    return null;
+  };
+
+  const startDiscovery = async () => {
+    setError(null);
+    setProgress(0);
+    
+    // Check common routers and local subnets
+    const subnets = ['192.168.1', '192.168.0', '192.168.100', '10.0.0'];
+    
+    // Check cache first
+    const saved = localStorage.getItem('netguardian_api_url') || 'http://192.168.1.75:49152';
+    setStatus(`Attempting reconnection to ${saved.replace('http://', '').replace(':49152', '')}...`);
     try {
-      // Short timeout
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 2000);
-      
-      const res = await fetch(`${url}/api/network`, { signal: controller.signal });
-      clearTimeout(id);
-      
+      const res = await fetch(`${saved}/api/network`, { mode: 'cors' } as any);
       if (res.ok) {
+        setApiUrl(saved);
+        onConnect();
+        return;
+      }
+    } catch (e) {}
+
+    // Not in cache? Scan deeply
+    setStatus('No active uplink found. Starting Deep Network Pulse Scan...');
+    for (const subnet of subnets) {
+      setStatus(`Scanning Node Mesh: ${subnet}.x...`);
+      const url = await scanSubnet(subnet);
+      if (url) {
         setApiUrl(url);
         localStorage.setItem('netguardian_api_url', url);
         onConnect();
-      } else {
-        setStatus('error');
+        return;
       }
-    } catch (e) {
-      setStatus('error');
     }
+    
+    setError('HQ NOT FOUND. Is the PC app (run_app.py) active on this Wi-Fi?');
+    setStatus('Discovery Failed');
   };
 
+  useEffect(() => {
+    startDiscovery();
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white p-6">
-      <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
-        <Settings className="w-8 h-8 text-white" />
-      </div>
-      <h1 className="text-2xl font-black tracking-tight mb-2">Connect to Desktop</h1>
-      <p className="text-slate-400 text-center text-sm mb-8">
-        Enter the IP address shown on your PC's NetGuardian window (run_app.py).
-      </p>
+    <div className="min-h-screen bg-[#050b18] flex flex-col items-center justify-center p-6 text-white overflow-hidden relative">
+      {/* Visual background glow */}
+      <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-600/10 via-transparent to-transparent"></div>
       
-      <div className="w-full max-w-xs space-y-4">
-        <div>
-          <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Desktop IP Address</label>
-          <input 
-            type="text" 
-            value={ip}
-            onChange={e => setIp(e.target.value)}
-            className="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 text-center font-mono text-lg font-bold tracking-wider focus:ring-2 focus:ring-blue-500 outline-none"
-            placeholder="192.168.1.xxx"
-          />
+      <div className="z-10 flex flex-col items-center space-y-12 w-full max-w-sm">
+        <div className="relative group">
+          <div className="w-24 h-24 bg-blue-600/20 rounded-3xl flex items-center justify-center border border-blue-500/30 animate-pulse transition-all group-hover:scale-110">
+            <Settings className="w-12 h-12 text-blue-500" />
+          </div>
+          <div className="absolute inset-0 bg-blue-500/10 blur-2xl -z-10"></div>
         </div>
-        
-        <button 
-          onClick={checkConnection}
-          disabled={status === 'checking'}
-          className="w-full bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all p-4 rounded-xl font-bold uppercase tracking-widest flex items-center justify-center"
-        >
-          {status === 'checking' ? <RefreshCw className="animate-spin w-5 h-5" /> : 'Connect'}
-        </button>
-        
-        {status === 'error' && (
-          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg text-red-400 text-xs text-center font-bold">
-            Connection Failed. Check IP & Firewall.
+
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl font-black tracking-tighter text-white italic uppercase">NetGuardian <span className="text-blue-500">PRO</span></h1>
+          <p className="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] h-4">
+            {status}
+          </p>
+        </div>
+
+        <div className="w-full space-y-6">
+          <div className="h-1 w-full bg-blue-900/30 rounded-full overflow-hidden border border-white/5">
+            <div 
+              className="h-full bg-gradient-to-r from-blue-600 to-indigo-400 transition-all duration-300 ease-out shadow-[0_0_15px_rgba(59,130,246,0.6)]"
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+          
+          <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-blue-500/50 px-1">
+             <span className="animate-pulse">Mapping Local Mesh...</span>
+             <span>{progress}%</span>
+          </div>
+        </div>
+
+        {error && (
+          <div className="p-5 bg-red-950/20 border border-red-500/20 rounded-3xl w-full text-center space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            <p className="text-red-400 text-xs font-bold leading-relaxed px-4">{error}</p>
+            <button 
+              onClick={startDiscovery}
+              className="w-full py-4 bg-red-600/80 hover:bg-red-500 text-white text-[10px] font-black rounded-2xl uppercase tracking-[0.2em] shadow-lg shadow-red-900/20 transition-all active:scale-95"
+            >
+              Restart Discovery Pulse
+            </button>
           </div>
         )}
+
+        <div className="absolute bottom-10 flex flex-col items-center space-y-2">
+            <div className="flex items-center space-x-2">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-ping"></span>
+                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-[0.2em]">Auto-Discovery Active</span>
+            </div>
+        </div>
       </div>
     </div>
   );
@@ -165,7 +233,7 @@ const AppContent: React.FC = () => {
   const isDetailView = location.pathname.startsWith('/device/');
 
   return (
-    <div className="flex flex-col h-screen max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative border-x border-gray-100">
+    <div className="flex flex-col h-screen w-full md:max-w-md mx-auto bg-white shadow-2xl overflow-hidden relative md:border-x border-gray-100">
       {/* Header */}
       {!isDetailView && (
         <header className="bg-white px-4 pt-4 pb-3 sticky top-0 z-20">

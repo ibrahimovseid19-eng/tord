@@ -14,7 +14,7 @@ const DeviceDetail: React.FC<{apiUrl: string}> = ({apiUrl}) => {
   React.useEffect(() => {
     const fetchDevice = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:49152/api/devices');
+        const res = await fetch(`${apiUrl}/api/devices`);
         if (res.ok) {
           const devices = await res.json();
           // Find device by mac (id)
